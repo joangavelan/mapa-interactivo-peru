@@ -6,6 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import territories from './assets/territories'
 import { territories_outline } from './assets/layer-styles'
 import type { Territory } from '@/types'
+import { LocationDisplay } from './location-display'
 // @ts-ignore
 import * as turf from '@turf/turf'
 
@@ -81,6 +82,8 @@ export default function Home() {
       onClick={handleLeftClick}
       onContextMenu={handleRightClick}
     >
+      <LocationDisplay enteredTerritories={entered_territories} />
+
       <Source
         id='territories'
         type='geojson'
