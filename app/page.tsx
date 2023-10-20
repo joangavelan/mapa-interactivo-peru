@@ -20,55 +20,52 @@ export default function Home() {
 
   const filtered_provinces = React.useMemo(() => {
     if (entered_territories.length < 1) return []
-    const orid = entered_territories[0].properties.id
-    return territories.provinces.filter((province) => province.properties.id.startsWith(orid))
+    const erid = entered_territories[0].properties.id
+    return territories.provinces.filter((province) => province.properties.id.startsWith(erid))
   }, [entered_territories])
 
   const filtered_districts = React.useMemo(() => {
     if (entered_territories.length < 2) return []
-    const opid = entered_territories[1].properties.id
-    return territories.districts.filter((district) => district.properties.id.startsWith(opid))
-  }, [entered_territories])
-
-  React.useEffect(() => {
-    const deepest_territory = entered_territories[entered_territories.length - 1]
-
-    map_ref.current?.fitBounds(
-      (deepest_territory?.properties.bbox ?? peru_bbox) as LngLatBoundsLike,
-      {
-        duration: 1000,
-        padding: 20
-      }
-    )
+    const epid = entered_territories[1].properties.id
+    return territories.districts.filter((district) => district.properties.id.startsWith(epid))
   }, [entered_territories])
 
   const handleLeftClick = (event: MapLayerMouseEvent) => {
     const { lng, lat } = event.lngLat
     const clicked_point = turf.point([lng, lat])
 
-    let clicked_territories = [] as Territory[]
+    const clicked_territories: Territory[] = []
 
     for (let i = 0; i < all_territories.length; i++) {
-      if (turf.booleanPointInPolygon(clicked_point, all_territories[i].geometry)) {
-        clicked_territories.push(all_territories[i])
-        const cts_length = clicked_territories.length
+      const territory = all_territories[i]
+
+      if (turf.booleanPointInPolygon(clicked_point, territory.geometry)) {
+        clicked_territories.push(territory)
 
         if (
-          cts_length &&
-          clicked_territories[cts_length - 1].properties.id !==
-            entered_territories[cts_length - 1]?.properties?.id
+          clicked_territories[clicked_territories.length - 1]?.properties.id !==
+          entered_territories[clicked_territories.length - 1]?.properties.id
         ) {
           break
         }
       }
     }
 
-    setEnteredTerritories(clicked_territories)
+    if (clicked_territories.length) setEnteredTerritories(clicked_territories)
   }
 
   const handleRightClick = () => {
     setEnteredTerritories((territories) => territories.slice(0, -1))
   }
+
+  React.useEffect(() => {
+    const deepest_territory = entered_territories[entered_territories.length - 1]
+
+    map_ref.current?.fitBounds((deepest_territory?.bbox ?? peru_bbox) as LngLatBoundsLike, {
+      duration: 1400,
+      padding: 20
+    })
+  }, [entered_territories])
 
   return (
     <Map

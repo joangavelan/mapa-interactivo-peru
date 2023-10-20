@@ -1,8 +1,7 @@
 const fs = require('fs')
-const turf = require('@turf/turf')
 
-const inputFilePath = 'app/assets/district-data.json' // Path to your input JSON file
-const outputFilePath = 'app/assets/territories/district-data-with-bbox.json' // Path for the output JSON file
+const inputFilePath = 'app/assets/territories/regions.json' // Path to your input JSON file
+const outputFilePath = 'app/assets/territories/regions-2.json' // Path for the output JSON file
 
 // Read the input JSON file
 fs.readFile(inputFilePath, 'utf8', (err, data) => {
@@ -15,14 +14,20 @@ fs.readFile(inputFilePath, 'utf8', (err, data) => {
     // Parse the input JSON data
     const geojson = JSON.parse(data)
 
-    // Loop through each feature and add a 'bbox' property
-    geojson.forEach((feature) => {
-      const bbox = turf.bbox(feature.geometry)
-      feature.properties.bbox = bbox
-    })
+    // Loop through each feature to modify its data
+    const modified_geojson = geojson.map(
+      ({ type, properties: { id, name, bbox, centroid }, geometry }) => {
+        return {
+          type,
+          bbox,
+          properties: { id, name, centroid },
+          geometry
+        }
+      }
+    )
 
     // Convert the modified GeoJSON to a JSON string
-    const modifiedData = JSON.stringify(geojson) // Use null and 2 for pretty printing
+    const modifiedData = JSON.stringify(modified_geojson)
 
     // Write the modified data to the output file
     fs.writeFile(outputFilePath, modifiedData, 'utf8', (err) => {
