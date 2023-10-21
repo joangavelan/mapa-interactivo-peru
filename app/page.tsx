@@ -4,7 +4,6 @@ import * as React from 'react'
 import Map, { Layer, Source, MapRef, MapLayerMouseEvent, LngLatBoundsLike } from 'react-map-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import territories from './assets/territories'
-import { territories_outline } from './assets/layer-styles'
 import type { Territory } from '@/types'
 import { LocationDisplay } from './location-display'
 // @ts-ignore
@@ -20,13 +19,13 @@ export default function Home() {
   const map_ref = React.useRef<MapRef>(null)
 
   const filtered_provinces = React.useMemo(() => {
-    if (entered_territories.length < 1) return []
+    if (!entered_territories[0]) return []
     const erid = entered_territories[0].properties.id
     return territories.provinces.filter((province) => province.properties.id.startsWith(erid))
   }, [entered_territories])
 
   const filtered_districts = React.useMemo(() => {
-    if (entered_territories.length < 2) return []
+    if (!entered_territories[1]) return []
     const epid = entered_territories[1].properties.id
     return territories.districts.filter((district) => district.properties.id.startsWith(epid))
   }, [entered_territories])
@@ -59,14 +58,14 @@ export default function Home() {
     setEnteredTerritories((territories) => territories.slice(0, -1))
   }
 
-  React.useEffect(() => {
-    const deepest_territory = entered_territories[entered_territories.length - 1]
+  const deepest_entered_territory = entered_territories.at(-1)
 
-    map_ref.current?.fitBounds((deepest_territory?.bbox ?? peru_bbox) as LngLatBoundsLike, {
+  React.useEffect(() => {
+    map_ref.current?.fitBounds((deepest_entered_territory?.bbox ?? peru_bbox) as LngLatBoundsLike, {
       duration: 1400,
       padding: 20
     })
-  }, [entered_territories])
+  }, [deepest_entered_territory])
 
   return (
     <Map
@@ -85,15 +84,59 @@ export default function Home() {
       <LocationDisplay enteredTerritories={entered_territories} />
 
       <Source
-        id='territories'
+        id='visible-territories'
         type='geojson'
         data={{
           type: 'FeatureCollection',
           features: [...territories.regions, ...filtered_provinces, ...filtered_districts]
         }}
       >
-        <Layer {...territories_outline} />
+        <Layer
+          id='visible-territories-default-outline'
+          type='line'
+          paint={{
+            'line-color': '#ccc',
+            'line-width': 1.5
+          }}
+        />
       </Source>
+
+      <Source
+        id='entered-territories'
+        type='geojson'
+        data={{ type: 'FeatureCollection', features: entered_territories }}
+      >
+        <Layer
+          id='entered-territories-outline'
+          type='line'
+          paint={{
+            'line-color': '#888',
+            'line-width': 1.5
+          }}
+        />
+      </Source>
+
+      {deepest_entered_territory && (
+        <Source id='deepest-entered-territory' type='geojson' data={deepest_entered_territory}>
+          <Layer
+            id='deepest-entered-territory-white-outline'
+            type='line'
+            paint={{
+              'line-color': '#fff',
+              'line-width': 1.5
+            }}
+          />
+          <Layer
+            id='deepest-entered-territory-red-outline'
+            type='line'
+            paint={{
+              'line-color': '#FF0036',
+              'line-width': 1.5,
+              'line-dasharray': [3, 3]
+            }}
+          />
+        </Source>
+      )}
     </Map>
   )
 }
