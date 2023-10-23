@@ -7,7 +7,7 @@ const regions: Territory[] = JSON.parse(JSON.stringify(regions_data))
 const provinces: Territory[] = JSON.parse(JSON.stringify(provinces_data))
 const districts: Territory[] = JSON.parse(JSON.stringify(districts_data))
 
-const territories: Record<string, Territory[]> = {
+const territories: Record<'regions' | 'provinces' | 'districts', Territory[]> = {
   regions,
   provinces,
   districts
