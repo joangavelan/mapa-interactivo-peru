@@ -88,8 +88,8 @@ export const territories_outline_styles: LayerProps = {
   }
 }
 
-export const department_outline_styles: LayerProps = {
-  id: 'department_outline',
+export const region_outline_styles: LayerProps = {
+  id: 'region_outline',
   type: 'line',
   paint: {
     'line-color': '#00AF91', //green

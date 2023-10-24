@@ -21,7 +21,6 @@ import { get_territories } from './get-territories'
 import { LocationDisplay } from './location-display'
 
 import {
-  department_outline_styles,
   district_area_selected_styles,
   district_area_styles,
   district_outline_styles,
@@ -30,9 +29,10 @@ import {
   province_area_styles,
   province_outline_styles,
   region_area_styles,
+  region_outline_styles,
   territories_outline_styles
 } from './layer-styles'
-import { setBoundsForLabels } from './utils'
+import { getCentroidFeatures, getFixedLabelFilter } from './utils'
 
 const peru_bbox = [-84.6356535, -18.3984472, -68.6519906, -0.0392818]
 
@@ -40,35 +40,37 @@ export default function Home() {
   const [entered_territories, setEnteredTerritories] = React.useState<
     Territory[]
   >([])
-  const all_territories = React.useRef<Territory[]>([])
-  const territories = React.useRef<TerritoryTypes>({
+  const grouped_territories = React.useRef<TerritoryTypes>({
     regions: [],
     provinces: [],
     districts: []
   })
+  const all_territories = React.useRef<Territory[]>([])
+
   const [regions, setRegions] = React.useState<RegionProps>({
     boundaries: [],
     centers: []
   })
-  const [regionsFixedLabelFilter, setRegionsFixedLabelFilter] = React.useState<
-    any[]
-  >(['all', true])
-  const [departmentCentroids, setDepartmentCentroids] = React.useState<
-    Centroid[]
-  >([])
-  const [regionsCentroidFilter, setRegionsCentroidsFilter] = React.useState<
-    any[]
-  >(['all', true])
+
+  const [dynamicCentroids, setDynamicCentroids] = React.useState<Centroid[]>([])
+  const [fixedLabelsFilter, setFixedLabelsFilter] = React.useState<any[]>([
+    'all',
+    true
+  ])
+  const [movingLabelsFilter, setMovingLabelsFilter] = React.useState<any[]>([
+    'all',
+    true
+  ])
 
   const map_ref = React.useRef<MapRef>(null)
-  const department_id = entered_territories[0]?.properties?.id
+  const region_id = entered_territories[0]?.properties?.id
   const province_id = entered_territories[1]?.properties?.id
   const deepest_entered_territory = entered_territories.at(-1)
 
   React.useEffect(() => {
     const load_territories = async () => {
       const data = await get_territories()
-      territories.current = data
+      grouped_territories.current = data
       all_territories.current = [
         ...data.regions,
         ...data.provinces,
@@ -91,10 +93,10 @@ export default function Home() {
   }, [])
 
   const filtered_provinces = React.useMemo(() => {
-    if (!department_id) return { boundaries: [], centers: [] }
-    return territories.current.provinces.reduce<RegionProps>(
+    if (!region_id) return { boundaries: [], centers: [] }
+    return grouped_territories.current.provinces.reduce<RegionProps>(
       (acc, province) => {
-        if (province.properties?.id.startsWith(department_id)) {
+        if (province.properties?.id.startsWith(region_id)) {
           acc['boundaries'].push(province)
           acc['centers'].push(
             turf.point(province?.properties?.com, {
@@ -107,11 +109,11 @@ export default function Home() {
       },
       { boundaries: [], centers: [] }
     )
-  }, [department_id])
+  }, [region_id])
 
   const filtered_districts = React.useMemo(() => {
     if (!province_id) return { boundaries: [], centers: [] }
-    return territories.current.districts.reduce<RegionProps>(
+    return grouped_territories.current.districts.reduce<RegionProps>(
       (acc, district) => {
         if (district.properties?.id.startsWith(province_id)) {
           acc['boundaries'].push(district)
@@ -134,9 +136,7 @@ export default function Home() {
 
     const clicked_territories: Territory[] = []
 
-    for (let i = 0; i < all_territories.current.length; i++) {
-      const territory = all_territories.current[i]
-
+    for (const territory of all_territories.current) {
       if (turf.booleanPointInPolygon(clicked_point, territory.geometry)) {
         clicked_territories.push(territory)
 
@@ -157,17 +157,16 @@ export default function Home() {
   }
 
   const handleMoveEnd = (e: ViewStateChangeEvent) => {
-    const map = e.target
-    const getLabelFeatures = setBoundsForLabels(map)
-    const { fixedLabelFilter, centroidFeatures } = getLabelFeatures({
-      layers: ['region_area', 'province_area', 'district_area'],
-      labelKey: 'id'
+    const { centroidFeatures } = getCentroidFeatures({
+      map: e.target,
+      layers: ['region_area', 'province_area', 'district_area']
     })
+    const fixedLabelFilter = getFixedLabelFilter(centroidFeatures)
 
-    setDepartmentCentroids(centroidFeatures)
+    setDynamicCentroids(centroidFeatures)
 
     if (entered_territories.length) {
-      setRegionsFixedLabelFilter(
+      setFixedLabelsFilter(
         fixedLabelFilter.concat(
           ...[
             entered_territories[0]?.properties?.id,
@@ -175,7 +174,7 @@ export default function Home() {
           ].filter(Boolean)
         )
       )
-      setRegionsCentroidsFilter([
+      setMovingLabelsFilter([
         '!in',
         'id',
         ...[
@@ -184,8 +183,8 @@ export default function Home() {
         ].filter(Boolean)
       ])
     } else {
-      setRegionsFixedLabelFilter(['all', true])
-      setRegionsCentroidsFilter(['all', false])
+      setFixedLabelsFilter(['all', true])
+      setMovingLabelsFilter(['all', false])
     }
   }
 
@@ -240,13 +239,13 @@ export default function Home() {
         type='geojson'
         data={{ type: 'FeatureCollection', features: entered_territories }}
       >
-        <Layer {...department_outline_styles} />
+        <Layer {...region_outline_styles} />
         <Layer {...province_outline_styles} />
         <Layer {...district_area_selected_styles} />
         <Layer {...district_outline_styles} />
       </Source>
       <Source
-        id='territories-labels'
+        id='territories-fixed-centers'
         type='geojson'
         data={{
           type: 'FeatureCollection',
@@ -257,17 +256,17 @@ export default function Home() {
           ]
         }}
       >
-        <Layer {...fixed_label_styles} filter={regionsFixedLabelFilter} />
+        <Layer {...fixed_label_styles} filter={fixedLabelsFilter} />
       </Source>
       <Source
-        id='territories-centroids'
+        id='territories-moving-centers'
         type='geojson'
         data={{
           type: 'FeatureCollection',
-          features: departmentCentroids
+          features: dynamicCentroids
         }}
       >
-        <Layer {...moving_label_styles} filter={regionsCentroidFilter} />
+        <Layer {...moving_label_styles} filter={movingLabelsFilter} />
       </Source>
       <ScaleControl />
       <FullscreenControl />

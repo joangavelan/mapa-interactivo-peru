@@ -1,12 +1,11 @@
+import { Centroid, TerritoryProps } from '@/types'
 // @ts-ignore
 import * as turf from '@turf/turf'
-import type { Feature, Point, Polygon, Position } from 'geojson'
+import type { Feature, Polygon, Position } from 'geojson'
 import mapboxgl, { MapboxGeoJSONFeature } from 'mapbox-gl'
 import polylabel from 'polylabel'
 
-type Centroid = Feature<Point, { name: string; id: string }>
-
-export const groupBy = <T>(list: T[], keyGetter: (arg: T) => string) => {
+export const groupListByKey = <T>(list: T[], keyGetter: (arg: T) => string) => {
   const map = new Map<string, T[]>()
   list.forEach(function (item) {
     const key = keyGetter(item)
@@ -50,6 +49,7 @@ export const getVisualCenter = (
   }
 }
 
+// calculates the mean for the given coordinates
 export const getCenter = (coordinates: Position[]): Position => {
   const lngList: Position = []
   const latList: Position = []
@@ -62,63 +62,68 @@ export const getCenter = (coordinates: Position[]): Position => {
   return [meanLng, meanLat]
 }
 
-export const setBoundsForLabels: (map: mapboxgl.Map) => ({
+// get centroids (Point like feature) for visible territories
+export const getCentroidFeatures = ({
+  map,
   layers,
-  labelKey
+  uniqueIdentifier = 'id'
 }: {
+  map: mapboxgl.Map
   layers: string[]
-  labelKey: string
+  uniqueIdentifier?: string
 }) => {
-  fixedLabelFilter: string[]
-  centroidFeatures: Centroid[]
-} = (map) => {
   const mapBounds = map.getBounds()
-  const mapViewBound = getMapViewBounds(mapBounds)
-  return ({ layers, labelKey }) => {
-    const features: MapboxGeoJSONFeature[] = map.queryRenderedFeatures(
-      undefined,
-      {
-        layers
-      }
-    )
-    const visualCenterList: Centroid[][] = []
-    const fixedLabelFilter = ['!in', labelKey]
-    const groups = groupBy(features, (feature) => feature.properties![labelKey])
-    groups.forEach((value, key) => {
-      const centerOfMass = JSON.parse(value[0].properties!.com)
-      if (!mapBounds.contains(centerOfMass)) {
-        fixedLabelFilter.push(key)
-        const visualCenter = value.map((obj) =>
-          getVisualCenter(obj, mapViewBound)
-        )
-        const cleared = visualCenter.filter(Boolean) as Feature<
-          Point,
-          { name: string; id: string }
-        >[]
-        if (cleared.length) {
-          visualCenterList.push(cleared)
-        }
-      }
-    })
-    const centroidFeatures: Centroid[] = []
-    visualCenterList.forEach((obj) => {
-      const coordinatesList: Position[] = []
-      obj.forEach(function (feature) {
-        coordinatesList.push(feature.geometry.coordinates)
-      })
-      const center = getCenter(coordinatesList)
-
-      const centerFeature: Centroid = turf.point(center, {
-        name: obj[0].properties!.name,
-        id: obj[0].properties!.id
-      })
-      centroidFeatures.push(centerFeature)
-    })
-    return {
-      fixedLabelFilter,
-      centroidFeatures
+  const mapViewBounds = getMapViewBounds(mapBounds)
+  const features: MapboxGeoJSONFeature[] = map.queryRenderedFeatures(
+    undefined,
+    {
+      layers
     }
+  )
+  const visualCenterList: Centroid[][] = []
+  const groups = groupListByKey(
+    features,
+    (feature) => feature.properties![uniqueIdentifier!] // assumes unique identifier in properties
+  )
+  groups.forEach((features) => {
+    const centerOfMass = JSON.parse(features[0].properties!.com)
+    if (!mapBounds.contains(centerOfMass)) {
+      const visualCenter = features
+        .map((feature) => getVisualCenter(feature, mapViewBounds))
+        .filter(Boolean) as Centroid[]
+      if (visualCenter.length) {
+        visualCenterList.push(visualCenter)
+      }
+    }
+  })
+  const centroidFeatures: Centroid[] = visualCenterList.map((featureList) => {
+    const coordinatesList: Position[] = featureList.map(
+      (feature) => feature.geometry.coordinates
+    )
+    const center = getCenter(coordinatesList)
+
+    const centerFeature: Centroid = turf.point(center, {
+      name: featureList[0].properties!.name,
+      id: featureList[0].properties!.id
+    })
+    return centerFeature
+  })
+  return {
+    centroidFeatures
   }
+}
+
+export const getFixedLabelFilter = (
+  features: Centroid[],
+  identifier = 'id'
+) => {
+  return [
+    '!in',
+    identifier,
+    ...features.map(
+      (feature) => feature.properties[identifier as keyof TerritoryProps]
+    )
+  ]
 }
 
 export const getMapViewBounds = (
