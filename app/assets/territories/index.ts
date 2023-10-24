@@ -1,5 +1,16 @@
-import raw_regions from './regions.json'
-import raw_provinces from './provinces.json'
-import raw_districts from './districts.json'
+import regions_data from './regions.json'
+import provinces_data from './provinces.json'
+import districts_data from './districts.json'
+import type { Territory } from '@/types'
 
-export { raw_regions, raw_provinces, raw_districts }
+const regions: Territory[] = JSON.parse(JSON.stringify(regions_data))
+const provinces: Territory[] = JSON.parse(JSON.stringify(provinces_data))
+const districts: Territory[] = JSON.parse(JSON.stringify(districts_data))
+
+const territories: Record<'regions' | 'provinces' | 'districts', Territory[]> = {
+  regions,
+  provinces,
+  districts
+}
+
+export default territories
