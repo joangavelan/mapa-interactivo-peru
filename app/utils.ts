@@ -1,4 +1,4 @@
-import { Centroid, TerritoryProps } from '@/types'
+import { Centroid, Territory, TerritoryFeatures, TerritoryProps } from '@/types'
 // @ts-ignore
 import * as turf from '@turf/turf'
 import type { Feature, Polygon, Position } from 'geojson'
@@ -141,4 +141,25 @@ export const getMapViewBounds = (
     ]
   ])
   return mapViewBound
+}
+
+export const getBoundariesAndCenters = (
+  territoryGroup: Territory[],
+  territory_id: string
+) => {
+  return territoryGroup.reduce<TerritoryFeatures>(
+    (acc, territory) => {
+      if (territory.properties?.id.startsWith(territory_id)) {
+        acc['boundaries'].push(territory)
+        acc['centers'].push(
+          turf.point(territory?.properties?.com, {
+            name: territory.properties?.name,
+            id: territory.properties?.id
+          })
+        )
+      }
+      return acc
+    },
+    { boundaries: [], centers: [] }
+  )
 }

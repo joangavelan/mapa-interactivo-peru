@@ -128,8 +128,8 @@ export const district_outline_styles: LayerProps = {
 }
 
 // Highlighted territory polygons
-export const highlightLayer: FillLayer = {
-  id: 'territories-highlighted',
+export const hoverLayer: FillLayer = {
+  id: 'territory-hover',
   type: 'fill',
   source: 'visible-territories',
   paint: {

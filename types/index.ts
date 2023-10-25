@@ -17,7 +17,7 @@ export type TerritoryTypes = {
   districts: Territory[]
 }
 
-export type RegionProps = {
+export type TerritoryFeatures = {
   boundaries: Territory[]
   centers: Centroid[]
 }
