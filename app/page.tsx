@@ -25,6 +25,7 @@ import {
   district_area_styles,
   district_outline_styles,
   fixed_label_styles,
+  highlightLayer,
   moving_label_styles,
   province_area_styles,
   province_outline_styles,
@@ -61,6 +62,27 @@ export default function Home() {
     'all',
     true
   ])
+  const [hoverInfo, setHoverInfo] = React.useState<{
+    longitude: number
+    latitude: number
+    territoryId?: string
+  } | null>(null)
+
+  const onHover = React.useCallback((event: MapLayerMouseEvent) => {
+    const territory = event.features && event.features[0]
+    setHoverInfo({
+      longitude: event.lngLat.lng,
+      latitude: event.lngLat.lat,
+      territoryId: territory && territory.properties?.id
+    })
+  }, [])
+
+  const selectedTerritory = (hoverInfo && hoverInfo.territoryId) || ''
+
+  const filter = React.useMemo(
+    () => ['in', 'id', selectedTerritory],
+    [selectedTerritory]
+  )
 
   const map_ref = React.useRef<MapRef>(null)
   const region_id = entered_territories[0]?.properties?.id
@@ -213,6 +235,8 @@ export default function Home() {
       onClick={handleLeftClick}
       onContextMenu={handleRightClick}
       onMoveEnd={handleMoveEnd}
+      onMouseMove={onHover}
+      interactiveLayerIds={['region_area', 'province_area', 'district_area']}
     >
       <LocationDisplay enteredTerritories={entered_territories} />
 
@@ -231,6 +255,7 @@ export default function Home() {
         <Layer {...region_area_styles} />
         <Layer {...province_area_styles} />
         <Layer {...district_area_styles} />
+        <Layer {...highlightLayer} filter={filter} />
         <Layer {...territories_outline_styles} />
       </Source>
 

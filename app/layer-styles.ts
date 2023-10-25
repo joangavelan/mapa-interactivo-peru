@@ -1,4 +1,4 @@
-import type { LayerProps } from 'react-map-gl'
+import type { FillLayer, LayerProps } from 'react-map-gl'
 
 export const moving_label_styles: LayerProps = {
   id: 'moving_labels',
@@ -125,4 +125,15 @@ export const district_outline_styles: LayerProps = {
     'line-width': 1
   },
   filter: ['==', ['length', ['get', 'id']], 6]
+}
+
+// Highlighted territory polygons
+export const highlightLayer: FillLayer = {
+  id: 'territories-highlighted',
+  type: 'fill',
+  source: 'visible-territories',
+  paint: {
+    'fill-color': '#6e599f',
+    'fill-opacity': 0.2
+  }
 }
