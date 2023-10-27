@@ -143,13 +143,19 @@ export default function Home() {
     setEnteredTerritories((territories) => territories.slice(0, -1))
   }
 
-  const handleMoveEnd = React.useCallback((e: ViewStateChangeEvent) => {
-    const { centroidFeatures } = getCentroidFeatures({
-      map: e.target,
-      layers: ['region_area', 'province_area', 'district_area']
-    })
-    setDynamicCentroids(centroidFeatures)
-  }, [])
+  const handleMoveEnd = React.useCallback(
+    (e: ViewStateChangeEvent) => {
+      // only calculates if user entered any territory level
+      if (entered_territories.length) {
+        const { centroidFeatures } = getCentroidFeatures({
+          map: e.target,
+          layers: ['region_area', 'province_area', 'district_area']
+        })
+        setDynamicCentroids(centroidFeatures)
+      }
+    },
+    [entered_territories.length]
+  )
 
   React.useEffect(() => {
     map_ref.current?.fitBounds(

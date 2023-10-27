@@ -1,7 +1,7 @@
 import { Centroid, Territory, TerritoryFeatures, TerritoryProps } from '@/types'
 // @ts-ignore
 import * as turf from '@turf/turf'
-import type { Feature, Polygon, Position } from 'geojson'
+import type { Feature, MultiPolygon, Polygon, Position } from 'geojson'
 import mapboxgl, { MapboxGeoJSONFeature } from 'mapbox-gl'
 import polylabel from 'polylabel'
 
@@ -23,8 +23,11 @@ export const getVisualCenter = (
   feature: Feature,
   mapViewBound: Feature<Polygon>
 ): Centroid | undefined => {
-  if (feature?.geometry?.type == 'Polygon') {
-    const intersection = turf.intersect(mapViewBound, feature.geometry)
+  if (feature.geometry.type == 'Polygon') {
+    const intersection: Feature<Polygon | MultiPolygon> = turf.intersect(
+      mapViewBound,
+      feature.geometry
+    )
     if (intersection) {
       const visualCenter: Centroid = turf.point([0, 0], {
         name: feature.properties?.name,
@@ -32,16 +35,24 @@ export const getVisualCenter = (
       })
       if (intersection.geometry.coordinates.length > 1) {
         const intersections: Position[] = []
-        intersection.geometry.coordinates.forEach(function (
-          coordinate: Position[][]
-        ) {
-          intersections.push(polylabel(coordinate))
+        intersection.geometry.coordinates.forEach((coordinate) => {
+          let centroidLike = polylabel(coordinate as Position[][])
+          if (centroidLike.some((value) => isNaN(value))) {
+            // Need to do this, since there is a chance polylabel returns [NaN, NaN, distance: NaN] and the label
+            // this happens because of how intersection polygon (multipolygon?) is calculated for territories that include "holes", like lakes.
+            // polylabel needs an extra [] wrapping the coordinates array
+            // https://github.com/mapbox/polylabel/issues/25
+            // https://github.com/mapbox/polylabel/issues/39#issuecomment-396855257
+            // I thought about using this for all coordinates when intersection has > 1 coordinates, but doesn't work and there seems to be no pattern
+            centroidLike = polylabel([coordinate] as Position[][])
+          }
+          intersections.push(centroidLike)
         })
 
         visualCenter.geometry.coordinates = getCenter(intersections)
       } else {
         visualCenter.geometry.coordinates = polylabel(
-          intersection.geometry.coordinates
+          intersection.geometry.coordinates as Position[][]
         )
       }
       return visualCenter
