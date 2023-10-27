@@ -102,14 +102,19 @@ export default function Home() {
     return getBoundariesAndCenters(territory_data.districts, province_id)
   }, [province_id, territory_data.districts])
 
-  const handleHover = React.useCallback((event: MapLayerMouseEvent) => {
-    const territory = event.features && event.features[0]
-    setHoverInfo({
-      longitude: event.lngLat.lng,
-      latitude: event.lngLat.lat,
-      territoryId: territory && territory.properties?.id
-    })
-  }, [])
+  const handleHover = React.useCallback(
+    (event: MapLayerMouseEvent) => {
+      const territory = event.features && event.features[0]
+      if (hover_info?.territoryId !== territory?.properties?.id) {
+        setHoverInfo({
+          longitude: event.lngLat.lng,
+          latitude: event.lngLat.lat,
+          territoryId: territory && territory.properties?.id
+        })
+      }
+    },
+    [hover_info?.territoryId]
+  )
 
   React.useEffect(() => {
     const load_territories = async () => {
