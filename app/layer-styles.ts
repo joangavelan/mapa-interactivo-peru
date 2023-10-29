@@ -1,4 +1,4 @@
-import type { FillLayer, LayerProps } from 'react-map-gl'
+import type { LayerProps } from 'react-map-gl'
 
 export const moving_label_styles: LayerProps = {
   id: 'moving_labels',
@@ -19,8 +19,8 @@ export const moving_label_styles: LayerProps = {
     'text-allow-overlap': false // to avoid label collision, optionally can be true but they will clutter
   },
   paint: {
-    'text-color': '#0a0908',
-    'text-halo-color': 'hsl(0, 0%, 100%)',
+    'text-color': 'hsl(0, 0%, 100%)',
+    'text-halo-color': 'hsl(0, 0, 0)',
     'text-halo-width': 1.5,
     'text-halo-blur': 1
   }
@@ -45,8 +45,8 @@ export const fixed_label_styles: LayerProps = {
     'text-allow-overlap': false // to avoid label collision,
   },
   paint: {
-    'text-color': '#0a0908',
-    'text-halo-color': 'hsl(0, 0%, 100%)',
+    'text-color': 'hsl(0, 0%, 100%)',
+    'text-halo-color': 'hsl(0, 0, 0)',
     'text-halo-width': 1.5,
     'text-halo-blur': 1
   }
@@ -56,7 +56,7 @@ export const region_area_styles: LayerProps = {
   id: 'region_area',
   type: 'fill',
   paint: {
-    'fill-color': '#eee'
+    'fill-color': 'transparent'
   },
   filter: ['==', ['length', ['get', 'id']], 2]
 }
@@ -65,7 +65,7 @@ export const province_area_styles: LayerProps = {
   id: 'province_area',
   type: 'fill',
   paint: {
-    'fill-color': '#ddd'
+    'fill-color': 'transparent'
   },
   filter: ['==', ['length', ['get', 'id']], 4]
 }
@@ -83,7 +83,7 @@ export const territories_outline_styles: LayerProps = {
   id: 'territories_ouline',
   type: 'line',
   paint: {
-    'line-color': '#fff',
+    'line-color': '#b3b3b3',
     'line-width': 1
   }
 }
@@ -92,8 +92,8 @@ export const region_outline_styles: LayerProps = {
   id: 'region_outline',
   type: 'line',
   paint: {
-    'line-color': '#00AF91', //green
-    'line-width': 1
+    'line-color': 'red',
+    'line-width': 1.5
   },
   filter: ['==', ['length', ['get', 'id']], 2]
 }
@@ -128,12 +128,12 @@ export const district_outline_styles: LayerProps = {
 }
 
 // Highlighted territory polygons
-export const hoverLayer: FillLayer = {
+export const hoverLayer: LayerProps = {
   id: 'territory-hover',
-  type: 'fill',
+  type: 'line',
   source: 'visible-territories',
   paint: {
-    'fill-color': '#6e599f',
-    'fill-opacity': 0.2
+    'line-color': 'red',
+    'line-width': 3
   }
 }

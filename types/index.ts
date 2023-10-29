@@ -21,3 +21,53 @@ export type TerritoryFeatures = {
   boundaries: Territory[]
   centers: Centroid[]
 }
+
+export type Coordinates = {
+  lng: number
+  lat: number
+}
+
+export type Image = {
+  _id: string
+  altText: string
+  title: string
+  url: string
+  lqip: string
+}
+
+export type Service = {
+  label: string
+  value: 'hotel' | 'restaurant' | 'sshh'
+}
+
+export type Route = {
+  _id: string
+  name: string
+  hex_color: string
+}
+
+export type Place = {
+  _id: string
+  title: string
+  coordinates: Coordinates
+  description: { _key: string; paragraph: string }[]
+  directions: string
+  images: Image[]
+  location: string
+  near_cities: string[]
+  route: Route & { icon_url: string }
+  services: Service[]
+  slug: string
+}
+
+export type Marker = {
+  _id: string
+  title: string
+  coordinates: Coordinates
+  route: Route & { icon_url: string }
+  popup?: {
+    featured_image: Image
+    description: string
+    slug: string
+  }
+}

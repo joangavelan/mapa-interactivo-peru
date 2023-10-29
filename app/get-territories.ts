@@ -19,10 +19,7 @@ export const get_territories = async () => {
     import('./assets/territories/provinces.json'),
     import('./assets/territories/districts.json')
   ])
-  const territories: Record<
-    'regions' | 'provinces' | 'districts',
-    Territory[]
-  > = {
+  const territories: Record<'regions' | 'provinces' | 'districts', Territory[]> = {
     regions,
     provinces,
     districts
