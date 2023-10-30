@@ -65,9 +65,7 @@ export type Marker = {
   title: string
   coordinates: Coordinates
   route: Route & { icon_url: string }
-  popup?: {
-    featured_image: Image
-    description: string
-    slug: string
-  }
+  featured_image: Image
+  description: string
+  slug: string
 }

@@ -10,7 +10,7 @@ export const Header = async () => {
 
   return (
     <div className='relative p-10 z-10 flex items-center gap-8'>
-      <Image src={logo} alt='logo' width={50} height={50} />
+      <Image src={logo} alt='logo' width={50} height={50} priority />
 
       <SearchBox />
 

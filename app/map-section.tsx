@@ -1,6 +1,6 @@
 'use client'
 
-import type { Centroid, Territory, TerritoryTypes } from '@/types'
+import type { Centroid, Marker as TMarker, Territory, TerritoryTypes } from '@/types'
 import 'mapbox-gl/dist/mapbox-gl.css'
 // @ts-ignore
 import * as turf from '@turf/turf'
@@ -10,6 +10,8 @@ import Map, {
   LngLatBoundsLike,
   MapLayerMouseEvent,
   MapRef,
+  Marker,
+  Popup,
   Source,
   ViewStateChangeEvent
 } from 'react-map-gl'
@@ -27,10 +29,16 @@ import {
   visible_territories_outline_styles
 } from './layer-styles'
 import { getBoundariesAndCenters, getCentroidFeatures, getFixedLabelFilter } from './utils'
+import { useRouteFilters } from '@/stores'
+import Image from 'next/image'
 
 const peru_bbox = [-84.6356535, -18.3984472, -68.6519906, -0.0392818]
 
-export const MapSection = () => {
+type MapSectionProps = {
+  markers: TMarker[]
+}
+
+export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
   const map_ref = React.useRef<MapRef>(null)
   const [entered_territories, setEnteredTerritories] = React.useState<Territory[]>([])
   const [territory_data, setTerritoryData] = React.useState<TerritoryTypes>({
@@ -45,6 +53,35 @@ export const MapSection = () => {
     latitude: number
     territoryId?: string
   } | null>(null)
+
+  const [markerPopup, setMarkerPopup] = React.useState<TMarker | null>(null)
+
+  const { activeRoutes } = useRouteFilters()
+  const activeMarkers = React.useMemo(
+    () => markers.filter((marker) => activeRoutes.includes(marker.route._id)),
+    [markers, activeRoutes]
+  )
+
+  React.useEffect(() => {
+    if (activeMarkers.length) {
+      // compute the bounding box based on all active marker's coordinates using the turf library
+      const activeMarkersCoords = activeMarkers.map(({ coordinates: { lng, lat } }) => [lng, lat])
+      const points = turf.points(activeMarkersCoords)
+      const bbox = turf.bbox(points)
+      // fit bounds to the computed result
+      map_ref.current?.fitBounds(bbox as LngLatBoundsLike, {
+        padding: 100,
+        duration: 1400,
+        maxZoom: 13
+      })
+    }
+  }, [activeMarkers])
+
+  React.useEffect(() => {
+    if (markerPopup && !activeRoutes.includes(markerPopup.route._id)) {
+      setMarkerPopup(null)
+    }
+  }, [activeRoutes, markerPopup])
 
   const region_id = entered_territories[0]?.properties?.id
   const province_id = entered_territories[1]?.properties?.id
@@ -241,6 +278,69 @@ export const MapSection = () => {
       >
         <Layer {...moving_label_styles} filter={moving_labels_filter} />
       </Source>
+
+      {/* markers */}
+      {activeMarkers.map((marker) => (
+        <Marker
+          key={marker._id}
+          longitude={marker.coordinates.lng}
+          latitude={marker.coordinates.lat}
+          anchor='bottom'
+          onClick={(e) => {
+            e.originalEvent.stopPropagation()
+            markerPopup && markerPopup._id === marker._id
+              ? setMarkerPopup(null)
+              : setMarkerPopup(marker)
+          }}
+        >
+          <div className='flex flex-col items-center'>
+            <Image
+              src={marker.route.icon_url}
+              width={30}
+              height={30}
+              alt={`${marker.title} route icon`}
+            />
+            <p
+              className='text-stroke text-base font-bold'
+              style={{ color: marker.route.hex_color }}
+            >
+              {marker.title}
+            </p>
+          </div>
+        </Marker>
+      ))}
+
+      {/* marker popup */}
+      {markerPopup && (
+        <Popup
+          anchor='bottom'
+          offset={70}
+          longitude={markerPopup.coordinates.lng}
+          latitude={markerPopup.coordinates.lat}
+          onClose={() => setMarkerPopup(null)}
+          closeButton={false}
+          className='[&>.mapboxgl-popup-content]:p-0 [&>.mapboxgl-popup-content]:rounded-lg [&>.mapboxgl-popup-content]:overflow-hidden'
+        >
+          <div className='flex flex-col items-center'>
+            <div className='relative w-full h-32'>
+              <Image
+                src={markerPopup.featured_image.url}
+                alt={markerPopup.featured_image.altText}
+                fill
+                objectFit='cover'
+                priority
+              />
+            </div>
+
+            <div className='p-3'>
+              <h2 className='font-semibold text-lg mb-1 text-yellow-700 group-hover:text-pink-500 duration-150'>
+                {markerPopup.title}
+              </h2>
+              <p className='text-sm line-clamp-3 text-gray-700'>{markerPopup.description}</p>
+            </div>
+          </div>
+        </Popup>
+      )}
 
       {/* <ScaleControl />
       <FullscreenControl />

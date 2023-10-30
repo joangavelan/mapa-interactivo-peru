@@ -23,11 +23,9 @@ export const getMarkers = (): Promise<Marker[]> => {
         title, 
         "coordinates": coordinates{ lng, lat },
         "route": route->{ _id, name, "icon_url": icon.asset->url, "hex_color": color.hex },
-        "popup": {
-          "featured_image": images[0].asset->{ _id, url, title, altText, "lqip": metadata.lqip },
-          "description": description[0].children[0].text,
-          "slug": slug.current
-        } 
+        "featured_image": images[0].asset->{ _id, url, title, altText, "lqip": metadata.lqip },
+        "description": description[0].children[0].text,
+        "slug": slug.current
       }
     `
   })

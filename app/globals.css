@@ -25,3 +25,8 @@ body {
 input::-webkit-search-cancel-button {
   display: none;
 }
+
+.text-stroke {
+  -webkit-text-stroke-width: 0.8px;
+  -webkit-text-stroke-color: #000;
+}
