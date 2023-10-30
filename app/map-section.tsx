@@ -6,14 +6,10 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import * as turf from '@turf/turf'
 import * as React from 'react'
 import Map, {
-  FullscreenControl,
-  GeolocateControl,
   Layer,
   LngLatBoundsLike,
   MapLayerMouseEvent,
   MapRef,
-  NavigationControl,
-  ScaleControl,
   Source,
   ViewStateChangeEvent
 } from 'react-map-gl'
@@ -21,17 +17,14 @@ import { get_territories } from './get-territories'
 import { LocationDisplay } from './location-display'
 
 import {
-  district_area_selected_styles,
   district_area_styles,
-  district_outline_styles,
+  entered_territories_outline_styles,
   fixed_label_styles,
-  hoverLayer,
+  hovered_territory_style,
   moving_label_styles,
   province_area_styles,
-  province_outline_styles,
   region_area_styles,
-  region_outline_styles,
-  territories_outline_styles
+  visible_territories_outline_styles
 } from './layer-styles'
 import { getBoundariesAndCenters, getCentroidFeatures, getFixedLabelFilter } from './utils'
 
@@ -194,6 +187,7 @@ export const MapSection = () => {
     >
       <LocationDisplay enteredTerritories={entered_territories} />
 
+      {/* territories */}
       <Source
         id='visible-territories'
         type='geojson'
@@ -209,8 +203,8 @@ export const MapSection = () => {
         <Layer {...region_area_styles} />
         <Layer {...province_area_styles} />
         <Layer {...district_area_styles} />
-        <Layer {...hoverLayer} filter={hoverFilter} />
-        <Layer {...territories_outline_styles} />
+        <Layer {...hovered_territory_style} filter={hoverFilter} />
+        <Layer {...visible_territories_outline_styles} />
       </Source>
 
       <Source
@@ -218,12 +212,10 @@ export const MapSection = () => {
         type='geojson'
         data={{ type: 'FeatureCollection', features: entered_territories }}
       >
-        <Layer {...region_outline_styles} />
-        <Layer {...province_outline_styles} />
-        <Layer {...district_area_selected_styles} />
-        <Layer {...district_outline_styles} />
+        <Layer {...entered_territories_outline_styles} />
       </Source>
 
+      {/* labels */}
       <Source
         id='territories-fixed-centers'
         type='geojson'
@@ -238,6 +230,7 @@ export const MapSection = () => {
       >
         <Layer {...fixed_label_styles} filter={fixed_labels_filter} />
       </Source>
+
       <Source
         id='territories-moving-centers'
         type='geojson'
