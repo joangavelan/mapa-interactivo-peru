@@ -72,7 +72,9 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
       map_ref.current?.fitBounds(bbox as LngLatBoundsLike, {
         padding: 100,
         duration: 1400,
-        maxZoom: 13
+        maxZoom: 13,
+        pitch: map_ref.current.getPitch(),
+        bearing: map_ref.current.getBearing()
       })
     }
   }, [activeMarkers])
@@ -193,7 +195,9 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
       (deepest_entered_territory?.properties?.bbox ?? peru_bbox) as LngLatBoundsLike,
       {
         duration: 1400,
-        padding: 130
+        padding: 130,
+        pitch: map_ref.current.getPitch(),
+        bearing: map_ref.current.getBearing()
       }
     )
   }, [deepest_entered_territory])
