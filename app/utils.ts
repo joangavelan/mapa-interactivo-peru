@@ -85,12 +85,9 @@ export const getCentroidFeatures = ({
 }) => {
   const mapBounds = map.getBounds()
   const mapViewBounds = getMapViewBounds(mapBounds)
-  const features: MapboxGeoJSONFeature[] = map.queryRenderedFeatures(
-    undefined,
-    {
-      layers
-    }
-  )
+  const features: MapboxGeoJSONFeature[] = map.queryRenderedFeatures(undefined, {
+    layers
+  })
   const visualCenterList: Centroid[][] = []
   const groups = groupListByKey(
     features,
@@ -108,9 +105,7 @@ export const getCentroidFeatures = ({
     }
   })
   const centroidFeatures: Centroid[] = visualCenterList.map((featureList) => {
-    const coordinatesList: Position[] = featureList.map(
-      (feature) => feature.geometry.coordinates
-    )
+    const coordinatesList: Position[] = featureList.map((feature) => feature.geometry.coordinates)
     const center = getCenter(coordinatesList)
 
     const centerFeature: Centroid = turf.point(center, {
@@ -124,40 +119,24 @@ export const getCentroidFeatures = ({
   }
 }
 
-export const getFixedLabelFilter = (
-  features: Centroid[],
-  identifier = 'id'
-) => {
+export const getFixedLabelFilter = (features: Centroid[], identifier = 'id') => {
   return [
     '!in',
     identifier,
-    ...features.map(
-      (feature) => feature.properties[identifier as keyof TerritoryProps]
-    )
+    ...features.map((feature) => feature.properties[identifier as keyof TerritoryProps])
   ]
 }
 
-export const getMapViewBounds = (
-  mapBounds: mapboxgl.LngLatBounds
-): Feature<Polygon> => {
+export const getMapViewBounds = (mapBounds: mapboxgl.LngLatBounds): Feature<Polygon> => {
   const southWest = [mapBounds.getWest(), mapBounds.getSouth()]
   const northEast = [mapBounds.getEast(), mapBounds.getNorth()]
   const mapViewBound: Feature<Polygon> = turf.polygon([
-    [
-      southWest,
-      [northEast[0], southWest[1]],
-      northEast,
-      [southWest[0], northEast[1]],
-      southWest
-    ]
+    [southWest, [northEast[0], southWest[1]], northEast, [southWest[0], northEast[1]], southWest]
   ])
   return mapViewBound
 }
 
-export const getBoundariesAndCenters = (
-  territoryGroup: Territory[],
-  territory_id: string
-) => {
+export const getBoundariesAndCenters = (territoryGroup: Territory[], territory_id: string) => {
   return territoryGroup.reduce<TerritoryFeatures>(
     (acc, territory) => {
       if (territory.properties?.id.startsWith(territory_id)) {
@@ -174,3 +153,12 @@ export const getBoundariesAndCenters = (
     { boundaries: [], centers: [] }
   )
 }
+
+export const getTerritoryType = (id: string) => {
+  if (id.length === 2) return 'Departamento'
+  if (id.length === 4) return 'Provincia'
+  if (id.length === 6) return 'Distrito'
+}
+
+export const capitalizeWords = (str: string) =>
+  str.toLowerCase().replace(/(^|\s)\S/g, (match) => match.toUpperCase())

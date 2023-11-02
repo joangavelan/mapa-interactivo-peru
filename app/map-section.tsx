@@ -29,7 +29,7 @@ import {
   visible_territories_outline_styles
 } from './layer-styles'
 import { getBoundariesAndCenters, getCentroidFeatures, getFixedLabelFilter } from './utils'
-import { useRouteFilters } from '@/stores'
+import { useRouteFilters, useSearch } from '@/stores'
 import Image from 'next/image'
 
 const peru_bbox = [-84.6356535, -18.3984472, -68.6519906, -0.0392818]
@@ -139,6 +139,17 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
     load_territories()
   }, [])
 
+  const { clickedResultId, setClickedResultId, setSearchQuery } = useSearch()
+
+  React.useEffect(() => {
+    if (clickedResultId) {
+      const selected_territorie = all_territories.find((t) => t.properties.id === clickedResultId)
+      setEnteredTerritories([selected_territorie as Territory])
+      setClickedResultId('')
+      setSearchQuery('')
+    }
+  }, [clickedResultId, all_territories, setClickedResultId, setSearchQuery])
+
   const handleLeftClick = (event: MapLayerMouseEvent) => {
     const { lng, lat } = event.lngLat
     const clicked_point = turf.point([lng, lat])
@@ -182,7 +193,7 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
       (deepest_entered_territory?.properties?.bbox ?? peru_bbox) as LngLatBoundsLike,
       {
         duration: 1400,
-        padding: 20
+        padding: 130
       }
     )
   }, [deepest_entered_territory])
