@@ -64,11 +64,11 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
 
   React.useEffect(() => {
     if (activeMarkers.length) {
-      // compute the bounding box based on all active marker's coordinates using the turf library
+      // compute the bounding box based on all active marker's coordinates
       const activeMarkersCoords = activeMarkers.map(({ coordinates: { lng, lat } }) => [lng, lat])
       const points = turf.points(activeMarkersCoords)
       const bbox = turf.bbox(points)
-      // fit bounds to the computed result
+      // fit bounds to the computed bbox
       map_ref.current?.fitBounds(bbox as LngLatBoundsLike, {
         padding: 100,
         duration: 1400,
