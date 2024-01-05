@@ -29,8 +29,9 @@ import {
   visible_territories_outline_styles
 } from './layer-styles'
 import { getBoundariesAndCenters, getCentroidFeatures, getFixedLabelFilter } from './utils'
-import { useRouteFilters, useSearch } from '@/stores'
+import { useMapStyle, useRouteFilters, useSearch } from '@/stores'
 import Image from 'next/image'
+import { MapStyles } from './style-controls'
 
 const peru_bbox = [-84.6356535, -18.3984472, -68.6519906, -0.0392818]
 
@@ -55,6 +56,8 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
   } | null>(null)
 
   const [markerPopup, setMarkerPopup] = React.useState<TMarker | null>(null)
+
+  const { mapStyle } = useMapStyle()
 
   const { activeRoutes } = useRouteFilters()
   const activeMarkers = React.useMemo(
@@ -230,7 +233,7 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
         position: 'absolute',
         inset: 0
       }}
-      mapStyle={process.env.NEXT_PUBLIC_MAPBOX_MAPSTYLE}
+      mapStyle={mapStyle}
       onClick={handleLeftClick}
       onContextMenu={handleRightClick}
       onMoveEnd={handleMoveEnd}
@@ -280,7 +283,13 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
           ]
         }}
       >
-        <Layer {...fixed_label_styles} filter={fixed_labels_filter} />
+        <Layer
+          {...fixed_label_styles({
+            textColor: mapStyle === MapStyles.satelite ? 'hsl(0, 0%, 100%)' : 'hsl(0, 0, 0)',
+            textHaloColor: mapStyle === MapStyles.satelite ? 'hsl(0, 0, 0)' : 'hsl(0, 0%, 100%)'
+          })}
+          filter={fixed_labels_filter}
+        />
       </Source>
 
       <Source
@@ -291,7 +300,13 @@ export const MapSection: React.FC<MapSectionProps> = ({ markers }) => {
           features: dynamic_centroids
         }}
       >
-        <Layer {...moving_label_styles} filter={moving_labels_filter} />
+        <Layer
+          {...moving_label_styles({
+            textColor: mapStyle === MapStyles.satelite ? 'hsl(0, 0%, 100%)' : 'hsl(0, 0, 0)',
+            textHaloColor: mapStyle === MapStyles.satelite ? 'hsl(0, 0, 0)' : 'hsl(0, 0%, 100%)'
+          })}
+          filter={moving_labels_filter}
+        />
       </Source>
 
       {/* markers */}

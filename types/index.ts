@@ -69,3 +69,7 @@ export type Marker = {
   description: string
   slug: string
 }
+
+export type MapStyle =
+  | 'mapbox://styles/joangavelan/cloajpwg700qd01qp0h5ifff1'
+  | 'mapbox://styles/joangavelan/clr06wl5c00v401qxgth1bygo'
